@@ -2,7 +2,6 @@
 #include <SPI.h>
 #include <Wire.h>
 #include <cmath>
-#include <ESP32Servo.h>
 #include <Adafruit_TCS34725.h>
 #include "ballIndex.h"
 
@@ -22,7 +21,6 @@ int difference_from(int color_state, int r, int g, int b);
 int get_ball_value(int color_state, char diode);
 
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_154MS, TCS34725_GAIN_1X);
-Servo sorter1;
 //Sorter airsortone;
 
 // Published values for SG90 servos; adjust if needed
@@ -30,12 +28,6 @@ int minUs = 1000;
 int maxUs = 2000;
 
 void setup() {
-  ESP32PWM::allocateTimer(0);
-	ESP32PWM::allocateTimer(1);
-	ESP32PWM::allocateTimer(2);
-	ESP32PWM::allocateTimer(3);
-	sorter1.setPeriodHertz(50);
-	sorter1.attach(sorterserverpin, 500, 2500);
 
   Serial.begin(9600);
   Serial.println("Color View Test!");
@@ -70,22 +62,12 @@ void setup() {
 void loop() {
   float red, green, blue;
   
-  tcs.setInterrupt(false);  // turn on LED
+  // tcs.setInterrupt(false);  // turn on LED
 
    // takes 50ms to read
+  // Serial.println("glip glop");
 
   while(true){
-    // for (int i = 500; i < 2500; i+=100){
-    //     sorter1.write(i);
-    //     Serial.println(i);
-    //     delay(100);
-    // }
-    // for (int i = 2500; i > 500; i-=100){
-    //     sorter1.write(i);
-    //     Serial.println(i);
-    //     delay(100);
-    // }
-
     tcs.getRGB(&red, &green, &blue);
     delay(100);
     Serial.print("R:\t"); Serial.println(int(red)); 
@@ -101,10 +83,9 @@ void loop() {
 void sortballs(){
   static int ball_color = Blank_ball;
   bool go = true;
-  int center = 1475;
+  // int center = 1475;
   while(go){
-    sorter1.write(center);
-    delay(400); 
+    delay(100); 
     ball_color = what_color_ball();
     switch(ball_color){
       case Blank_ball:
@@ -113,13 +94,13 @@ void sortballs(){
         break;
       case Black_ball:
         Serial.println("BLACK BALL");
-        sorter1.write(center + 300);
-        delay(100);
+        // sorter1.write(center + 300);
+        // delay(100);
         break;
       case White_ball:
         Serial.println("WHITE BALL");
-        sorter1.write(center - 300);
-        delay(100);
+        // sorter1.write(center - 300);
+        // delay(100);
         break;
     }
     Serial.println();
