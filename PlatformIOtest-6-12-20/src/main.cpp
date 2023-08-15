@@ -2,11 +2,9 @@
 #include <SPI.h>
 #include <Wire.h>
 #include <cmath>
-#include <ESP32Servo.h>
 #include <Adafruit_TCS34725.h>
 #include "ballIndex.h"
 
-#define sorterserverpin 14
 // for a common anode LED, connect the common pin to +5V
 // for common cathode, connect the common to ground
 
@@ -16,26 +14,16 @@
 // our RGB -> eye-recognized gamma color
 byte gammatable[256];
 
-void sortballs();
+void sortball();
 int what_color_ball();
+static char get_ball_color();
 int difference_from(int color_state, int r, int g, int b);
 int get_ball_value(int color_state, char diode);
 
-Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_154MS, TCS34725_GAIN_1X);
-Servo sorter1;
+Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_2_4MS, TCS34725_GAIN_1X);
 //Sorter airsortone;
 
-// Published values for SG90 servos; adjust if needed
-int minUs = 1000;
-int maxUs = 2000;
-
 void setup() {
-  ESP32PWM::allocateTimer(0);
-	ESP32PWM::allocateTimer(1);
-	ESP32PWM::allocateTimer(2);
-	ESP32PWM::allocateTimer(3);
-	sorter1.setPeriodHertz(50);
-	sorter1.attach(sorterserverpin, 500, 2500);
 
   Serial.begin(9600);
   Serial.println("Color View Test!");
@@ -67,85 +55,54 @@ void setup() {
 // The commented out code in loop is example of getRawData with clear value.
 // Processing example colorview.pde can work with this kind of data too, but It requires manual conversion to 
 // [0-255] RGB value. You can still uncomments parts of colorview.pde and play with clear value.
+
+int iterator = 0;
+const int upTo = 1; 
+
 void loop() {
-  float red, green, blue;
-  
-  tcs.setInterrupt(false);  // turn on LED
-
-   // takes 50ms to read
-
-  while(true){
-    // for (int i = 500; i < 2500; i+=100){
-    //     sorter1.write(i);
-    //     Serial.println(i);
-    //     delay(100);
-    // }
-    // for (int i = 2500; i > 500; i-=100){
-    //     sorter1.write(i);
-    //     Serial.println(i);
-    //     delay(100);
-    // }
-
-    tcs.getRGB(&red, &green, &blue);
-    delay(100);
-    Serial.print("R:\t"); Serial.println(int(red)); 
-    Serial.print("G:\t"); Serial.println(int(green)); 
-    Serial.print("B:\t"); Serial.println(int(blue));
-
-    Serial.print("\n");
-    sortballs();
-  }
+  sortball();
 }
-
 //sort ball que
-void sortballs(){
-  static int ball_color = Blank_ball;
-  bool go = true;
-  int center = 1475;
-  while(go){
-    sorter1.write(center);
-    delay(400); 
-    ball_color = what_color_ball();
-    switch(ball_color){
-      case Blank_ball:
-        Serial.println("BLANK BALL");
-        go = false;
-        break;
-      case Black_ball:
-        Serial.println("BLACK BALL");
-        sorter1.write(center + 300);
-        delay(100);
-        break;
-      case White_ball:
-        Serial.println("WHITE BALL");
-        sorter1.write(center - 300);
-        delay(100);
-        break;
-    }
-    Serial.println();
-  }
-}
 
-//returns the color of the ball in the chamber
-int what_color_ball(){
+void sortball(){
+  if (Serial.available() > 0) {
+    char data = Serial.read(); // Read the incoming data from Raspberry Pi
+    // Serial.printf("Timer 1: %d\n", millis());
+    int ball_num = get_ball_color();
+    switch (ball_num)
+    {
+    case Black_ball:
+      Serial.println('b');
+      break;
+    
+    case White_ball:
+      Serial.println('w');
+      break;
+
+    default:
+      // Boops
+      break;
+    }
+    // Serial.printf("Timer 1: %d\n", millis());
+  }
+} 
+
+static char get_ball_color(){
   //get ball color from tcs (color sensor)
   float red, green, blue;
   tcs.setInterrupt(false);  // turn on LED
+  // Serial.printf("Timer 2: %d\n", millis());
   tcs.getRGB(&red, &green, &blue);
+  // Serial.printf("Timer 2: %d\n", millis());
+
   
-  Serial.print("R:\t"); Serial.println(int(red)); 
-  Serial.print("G:\t"); Serial.println(int(green)); 
-  Serial.print("B:\t"); Serial.println(int(blue));
-  
-  //gets difference from a color ball from 
-  int diff_blank = difference_from(Blank_ball, int(red), int(green), int(blue));
+  int diff_blank = 10000000;
   int diff_black = difference_from(Black_ball, int(red), int(green), int(blue));
   int diff_white = difference_from(White_ball, int(red), int(green), int(blue));
-  //Serial.print("diff blank "); Serial.println(diff_blank);
-  //Serial.print("diff black "); Serial.println(diff_black);
-  //Serial.print("diff white "); Serial.println(diff_white);
+
 
   int diffs[] = {diff_blank, diff_black, diff_white};
+  // int diffs[] = {diff_black, diff_white};
   int closest = 0;
   for(int i = 1; i < num_color_states; i++){
     if (diffs[i] < diffs[closest])
@@ -158,7 +115,7 @@ int what_color_ball(){
 int difference_from(int color_state, int r, int g, int b){
   int difference = 0;
   difference += abs(get_ball_value(color_state, 'r') - r);
-  //difference += abs(get_ball_value(color_state, 'g') - g);
+  difference += abs(get_ball_value(color_state, 'g') - g);
   difference += abs(get_ball_value(color_state, 'b') - b);
   return difference;
 }
