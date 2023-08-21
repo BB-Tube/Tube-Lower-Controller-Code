@@ -14,14 +14,14 @@
 // our RGB -> eye-recognized gamma color
 byte gammatable[256];
 
-void sortball();
+void print_ball();
 int what_color_ball();
 static char get_ball_color();
 int difference_from(int color_state, int r, int g, int b);
 int get_ball_value(int color_state, char diode);
+const int ledPin = A0; // Use the built-in LED pin
 
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_2_4MS, TCS34725_GAIN_1X);
-//Sorter airsortone;
 
 void setup() {
 
@@ -50,42 +50,43 @@ void setup() {
     }
     //Serial.println(gammatable[i]);
   }
-}
 
-// The commented out code in loop is example of getRawData with clear value.
-// Processing example colorview.pde can work with this kind of data too, but It requires manual conversion to 
-// [0-255] RGB value. You can still uncomments parts of colorview.pde and play with clear value.
+
+  pinMode(ledPin, OUTPUT);
+  Serial.println("Hello, World!"); // Print a message to Serial Monitor
+}
 
 int iterator = 0;
 const int upTo = 1; 
 
 void loop() {
-  sortball();
-}
-//sort ball que
-
-void sortball(){
+  delay(1);
   if (Serial.available() > 0) {
     char data = Serial.read(); // Read the incoming data from Raspberry Pi
-    // Serial.printf("Timer 1: %d\n", millis());
-    int ball_num = get_ball_color();
-    switch (ball_num)
-    {
+    switch (data){
+      case '-':
+        print_ball();
+        break;
+      default:
+        break;
+    }
+  }
+}
+
+void print_ball(){
+  // Serial.printf("Timer 1: %d\n", millis());
+  int ball_num = get_ball_color();
+  switch (ball_num){
     case Black_ball:
       Serial.println('b');
       break;
-    
     case White_ball:
       Serial.println('w');
       break;
-
     default:
-      // Boops
       break;
-    }
-    // Serial.printf("Timer 1: %d\n", millis());
   }
-} 
+}
 
 static char get_ball_color(){
   //get ball color from tcs (color sensor)
