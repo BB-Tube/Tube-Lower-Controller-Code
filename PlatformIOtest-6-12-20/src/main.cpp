@@ -14,6 +14,8 @@
 // our RGB -> eye-recognized gamma color
 byte gammatable[256];
 
+
+bool printHallState(int pin, int threshhold, bool flip);
 void print_ball();
 int what_color_ball();
 static char get_ball_color();
@@ -21,6 +23,7 @@ int difference_from(int color_state, int r, int g, int b);
 int get_ball_value(int color_state, char diode);
 const int ledPin = A0; // Use the built-in LED pin
 
+const int analogInputSelectorHall = A10;
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_2_4MS, TCS34725_GAIN_1X);
 
 void setup() {
@@ -67,9 +70,27 @@ void loop() {
       case '-':
         print_ball();
         break;
+      case 's':
+        printHallState(analogInputSelectorHall, 500, true);
       default:
         break;
     }
+  }
+}
+
+bool printHallState(int pin, int threshhold, bool flip=false){
+  int analogValue = analogRead(pin);
+  // Serial.print("Analog value on GPIO 10: ");
+  // Serial.println(analogValue);
+  bool if_below = analogValue < threshhold;
+  if(flip)
+    if_below != if_below;
+  if(analogValue < threshhold){
+    Serial.println('0');
+    return false;
+  }else{
+    Serial.println('1');
+    return true;
   }
 }
 
