@@ -14,7 +14,6 @@
 // our RGB -> eye-recognized gamma color
 byte gammatable[256];
 
-
 bool printHallState(int pin, int threshhold, bool flip);
 void print_ball();
 int what_color_ball();
@@ -23,11 +22,12 @@ int difference_from(int color_state, int r, int g, int b);
 int get_ball_value(int color_state, char diode);
 const int ledPin = A0; // Use the built-in LED pin
 
-const int analogInputSelectorHall = A10;
+const int analogInputSelectorHall   = A10;
+const int analogInputBeamBreakBlack = A9;
+const int analogInputBeamBreakWhite = A8;
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_2_4MS, TCS34725_GAIN_1X);
 
 void setup() {
-
   Serial.begin(9600);
   Serial.println("Color View Test!");
 
@@ -54,7 +54,6 @@ void setup() {
     //Serial.println(gammatable[i]);
   }
 
-
   pinMode(ledPin, OUTPUT);
   Serial.println("Hello, World!"); // Print a message to Serial Monitor
 }
@@ -71,7 +70,17 @@ void loop() {
         print_ball();
         break;
       case 's':
+        // Susan - Hall Sensor
         printHallState(analogInputSelectorHall, 500, true);
+        break;
+      case 'n':
+        // Susan - Dispenser Black Beam Break
+        printHallState(analogInputBeamBreakBlack, 500, true);
+        break;
+      case 'e':
+        // Susan - Dispenser Black Beam Break
+        printHallState(analogInputBeamBreakWhite, 500, true);
+        break;
       default:
         break;
     }
@@ -117,11 +126,9 @@ static char get_ball_color(){
   tcs.getRGB(&red, &green, &blue);
   // Serial.printf("Timer 2: %d\n", millis());
 
-  
   int diff_blank = 10000000;
   int diff_black = difference_from(Black_ball, int(red), int(green), int(blue));
   int diff_white = difference_from(White_ball, int(red), int(green), int(blue));
-
 
   int diffs[] = {diff_blank, diff_black, diff_white};
   // int diffs[] = {diff_black, diff_white};
