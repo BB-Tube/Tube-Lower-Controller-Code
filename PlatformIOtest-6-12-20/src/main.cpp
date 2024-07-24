@@ -78,7 +78,7 @@ void loop() {
         printHallState(analogInputBeamBreakBlack, 500, true);
         break;
       case 'e':
-        // Susan - Dispenser Black Beam Break
+        // Susan - Dispenser White Beam Break
         printHallState(analogInputBeamBreakWhite, 500, true);
         break;
       default:
