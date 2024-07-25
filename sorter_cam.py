@@ -3,6 +3,8 @@ import numpy as np
 import datetime
 import os
 
+### 
+
 # Define the subfolder where you want to save the photos
 save_directory = os.path.join(os.getcwd(), "captured_images")
 os.makedirs(save_directory, exist_ok=True)
