@@ -4,12 +4,20 @@
 #include <cmath>
 #include <Adafruit_TCS34725.h>
 #include "ballIndex.h"
+#include <Adafruit_NeoPixel.h>
+#include <stdint.h> // Explicitly include the header for uint32_t
 
 // for a common anode LED, connect the common pin to +5V
 // for common cathode, connect the common to ground
 
 // set to false if using a common cathode LED
 #define commonAnode true
+#define PIN            6  // Change this to the pin you've connected to the NeoPixel data input
+#define NUMPIXELS      4  // Number of NeoPixels you are controlling
+
+void setColorRange(int startPixel, int endPixel, uint32_t color);
+
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 // our RGB -> eye-recognized gamma color
 byte gammatable[256];
@@ -28,6 +36,9 @@ const int analogInputBeamBreakWhite = A8;
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_2_4MS, TCS34725_GAIN_1X);
 
 void setup() {
+  strip.begin();           // Initialize the strip
+  strip.show();            // Initialize all pixels to 'off'
+
   Serial.begin(9600);
   Serial.println("Color View Test!");
 
@@ -81,6 +92,16 @@ void loop() {
         // Susan - Dispenser White Beam Break
         printHallState(analogInputBeamBreakWhite, 500, true);
         break;
+      case 'k':
+        Serial.println("ON");
+        setColorRange(0, 3, strip.Color(100, 100, 100)); // Set first 6 pixels to red
+        strip.show();    
+        break;
+      case 'l':
+        Serial.println("OFF");
+        setColorRange(0, 3, strip.Color(0, 0, 0)); // Set first 6 pixels to red
+        strip.show();    
+        break;
       default:
         break;
     }
@@ -125,6 +146,12 @@ static char get_ball_color(){
   // Serial.printf("Timer 2: %d\n", millis());
   tcs.getRGB(&red, &green, &blue);
   // Serial.printf("Timer 2: %d\n", millis());
+  Serial.print("RED : ");
+  Serial.println(red);
+  Serial.print("Green : ");
+  Serial.println(green);
+  Serial.print("Blue : ");
+  Serial.println(blue);
 
   int diff_blank = 10000000;
   int diff_black = difference_from(Black_ball, int(red), int(green), int(blue));
@@ -182,4 +209,11 @@ int get_ball_value(int color_state, char diode){
       Serial.println("non exsistent ball asked for");
     }
   return -1;
+}
+
+// Function to set a range of NeoPixels to a specific color
+void setColorRange(int startPixel, int endPixel, uint32_t color) {
+  for (int i = startPixel; i <= endPixel; i++) {
+    strip.setPixelColor(i, color);
+  }
 }
